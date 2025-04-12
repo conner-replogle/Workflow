@@ -1,4 +1,4 @@
-import { StyleSheet, Image, Platform, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, Image, Platform, View, TouchableOpacity, ScrollView } from 'react-native';
 
 import { Collapsible } from '@/components/Collapsible';
 import { ExternalLink } from '@/components/ExternalLink';
@@ -15,7 +15,7 @@ import { Text } from '@/components/ui/text';
 import { Box } from '@/components/ui/box';
 import { VStack } from '@/components/ui/vstack';
 import { WorkoutClockTime } from '@/components/workout/WorkoutTimeClock';
-import { Icon, EditIcon, AddIcon, CloseIcon, RemoveIcon } from "@/components/ui/icon"
+import { Icon, EditIcon, AddIcon, CloseIcon, RemoveIcon, InfoIcon } from "@/components/ui/icon"
 import React from 'react';
 import { ModalBackdrop, Modal,ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter } from '@/components/ui/modal';
 import { exercises } from '@/lib/hardCodedExercisies';
@@ -32,6 +32,8 @@ import {
   TableCaption,
 } from "@/components/ui/table"
 import { WorkoutExerciseCard } from '@/components/workout/WorkoutExerciseCard';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Divider } from '@/components/ui/divider';
 export default function Workout() {
   const workoutActive = useWorkoutStore((state) => state.workout);
   const startWorkout = useWorkoutStore((state) => state.start);
@@ -64,11 +66,14 @@ function ActiveWorkout(){
   return (
     <Box className="justify-start w-full h-full">
       <VStack space="md" reversed={false}>
-        <View>
+        <View className='p-4'>
           <Heading>{workoutActive?.name}</Heading>
           <WorkoutClockTime startingTime={workoutActive?.startTime} />
         </View>
+        <ScrollView>
         {
+                  
+
           workoutActive?.exercises.map((exercise, index) => (
             <WorkoutExerciseCard
               key={index}
@@ -76,7 +81,9 @@ function ActiveWorkout(){
               index={index}
             />
           ))
+       
         }
+                   </ScrollView>
         {
           workoutActive.exercises.length === 0 && (
             <Center>
@@ -89,6 +96,7 @@ function ActiveWorkout(){
       <AddExercise />
     
     </Box>
+
   );
 }
 
@@ -132,12 +140,44 @@ function AddExercise(){
           />
         </ModalCloseButton>
       </ModalHeader>
+      
       <ModalBody>
+      <Divider/>
+
+        <ScrollView>
+      
+        
+          {
+             exercises.slice(0,2).map((exercise) => (
+              <TouchableOpacity
+                key={exercise.id}
+                className="flex-row items-center justify-between p-4 "
+                onPress={() => {
+                  setSelectedExercises((prev) => {
+                    if (prev.some((ex) => ex.id === exercise.id)) {
+                      return prev.filter((ex) => ex.id !== exercise.id);
+                    } else {
+                      return [...prev, exercise];
+                    }
+                  }
+                  );
+                }}
+              >
+                <Text className=" text-violet-500">{exercise.name}</Text>
+  
+                {
+                  selectedExercises.some((ex) => ex.id === exercise.id) ?
+                  <Icon as={RemoveIcon} size="md" />:
+                  <Icon as={AddIcon} size="md" />}
+              </TouchableOpacity>
+            ))
+        }
+          <Divider/>
         {
           exercises.map((exercise) => (
             <TouchableOpacity
               key={exercise.id}
-              className="flex-row items-center justify-between p-4 border-b border-background-200"
+              className="flex-row items-center justify-between p-4"
               onPress={() => {
                 setSelectedExercises((prev) => {
                   if (prev.some((ex) => ex.id === exercise.id)) {
@@ -157,6 +197,7 @@ function AddExercise(){
             </TouchableOpacity>
           ))
         }
+        </ScrollView>
         
       </ModalBody>
       <ModalFooter>

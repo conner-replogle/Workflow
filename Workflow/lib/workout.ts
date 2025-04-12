@@ -22,6 +22,7 @@ type WorkoutExercise = {
 
 type ExerciseSet = {
     id?: string;
-    weight: number;
-    reps: number;
+    weight?: number;
+    reps?: number;
+    completed?: boolean;
 }
