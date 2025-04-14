@@ -8,7 +8,7 @@ type Workout = {
 }
 
 type Exercise = {
-    id?: string;
+    id?: number;
     name: string;
     description: string;
 }

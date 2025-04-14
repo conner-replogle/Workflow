@@ -18,7 +18,6 @@ import { WorkoutClockTime } from '@/components/workout/WorkoutTimeClock';
 import { Icon, EditIcon, AddIcon, CloseIcon, RemoveIcon, InfoIcon } from "@/components/ui/icon"
 import React from 'react';
 import { ModalBackdrop, Modal,ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter } from '@/components/ui/modal';
-import { exercises } from '@/lib/hardCodedExercisies';
 
 
 import {
@@ -34,6 +33,8 @@ import {
 import { WorkoutExerciseCard } from '@/components/workout/WorkoutExerciseCard';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Divider } from '@/components/ui/divider';
+import { useApiStore } from '@/lib/useApi';
+import { useSuggestedExercises } from '@/lib/suggested';
 export default function Workout() {
   const workoutActive = useWorkoutStore((state) => state.workout);
   const startWorkout = useWorkoutStore((state) => state.start);
@@ -58,7 +59,6 @@ export default function Workout() {
 
 function ActiveWorkout(){
   const workoutActive = useWorkoutStore((state) => state.workout);
-
   if (!workoutActive) {
     return null;
   }
@@ -93,7 +93,7 @@ function ActiveWorkout(){
         }
         
       </VStack>
-      <AddExercise />
+      <AddExercise previous={workoutActive.exercises.map((v) => v.template)} />
     
     </Box>
 
@@ -101,11 +101,12 @@ function ActiveWorkout(){
 }
 
 
-function AddExercise(){
+function AddExercise({previous}: {previous: Exercise[]}) {
   const [showAddExercise, setShowExercise] = React.useState(false)
   const [selectedExercises,setSelectedExercises]  = React.useState<Exercise[]>([])
   const addExercise = useWorkoutStore((state) => state.addExercise);
-
+  const exercises = useApiStore((state) => state.exercises);
+  const suggested = useSuggestedExercises(previous);
   return (
     <>
     <TouchableOpacity
