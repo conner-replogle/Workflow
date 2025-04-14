@@ -22,6 +22,6 @@ Run App
 
 in server/ 
 
-start by tunninh 
+start by running 
 
-go run main.go
+`go run cmd/main.go`
