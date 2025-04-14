@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -30,8 +31,6 @@ type Workout struct {
 }
 
 var db *gorm.DB
-
-
 
 func initDatabase() {
 	var err error
@@ -138,11 +137,9 @@ func main() {
 	//Setup DB
 	initDatabase()
 
-
 	// Setup handlers
 	http.HandleFunc("/api/exercises/suggested", suggestExercisesHandler)
 	http.HandleFunc("/api/exercises", getAllExercises)
-
 
 	// Start the server
 	port := ":8080"

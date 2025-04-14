@@ -1,4 +1,4 @@
-module github.com/conner-replogle/Workflow/server
+module workflow
 
 go 1.24.0
 
