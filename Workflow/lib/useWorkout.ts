@@ -122,7 +122,7 @@ export const useWorkoutStore = create<WorkoutState>()(
                 workout: {
                     ...state.workout,
                     exercises: [...(state.workout?.exercises || []), {
-                        id: exercise.id,
+
                         template: exercise,
                         sets: [],
                     }],
