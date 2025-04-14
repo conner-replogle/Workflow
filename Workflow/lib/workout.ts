@@ -15,7 +15,7 @@ type Exercise = {
 
 
 type WorkoutExercise = {
-    id?: string;
+    id?: number;
     template: Exercise;
     sets: ExerciseSet[];
 }

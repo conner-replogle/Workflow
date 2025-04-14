@@ -1,27 +1,28 @@
-Running Code
+# Running the Project
 
-Dependencies
- - Install GO https://go.dev/doc/install
- - Install Node https://nodejs.org/en/
+## Dependencies
 
+- [Install Go](https://go.dev/doc/install)
+- [Install Node.js](https://nodejs.org/en/)
 
-## First launch
+## First Launch
 
+### App
 
-### APP
-In Workflow Folder
+1. Navigate to the `workflow` folder.
+2. Install dependencies:
+    ```bash
+    npm install
+    ```
+3. Run the app:
+    ```bash
+    npm run start
+    ```
 
-Install deps
-`npm install`
+### Server
 
-Run App
-`npm run start`
-
-
-### SERVER
-
-in server/ 
-
-start by running 
-
-`go run cmd/main.go`
+1. Navigate to the `server/` directory.
+2. Start the server:
+    ```bash
+    go run cmd/main.go
+    ```
