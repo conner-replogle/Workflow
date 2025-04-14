@@ -125,10 +125,10 @@ function AddExercise({previous}: {previous: Exercise[]}) {
     onClose={() => {
       setShowExercise(false)
     }}
-    size="full"
+    size="lg"
   >
     <ModalBackdrop />
-    <ModalContent>
+    <ModalContent className='max-h-[60%]'>
       <ModalHeader>
         <Heading size="md" className="text-typography-950">
           Add an Exercise
@@ -142,7 +142,7 @@ function AddExercise({previous}: {previous: Exercise[]}) {
         </ModalCloseButton>
       </ModalHeader>
       
-      <ModalBody>
+      <ModalBody >
       <Divider/>
 
         <ScrollView>
