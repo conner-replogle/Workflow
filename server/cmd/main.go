@@ -80,6 +80,7 @@ func initDatabase() {
 				log.Printf("Failed to query exercise %s: %v", exercise, err)
 			}
 		} else {
+			//update the existing exercise
 			slog.Debug("Exercise already exists:", existingExercise)
 			existingExercise.Description = exercise
 			existingExercise.Name = exercise
@@ -134,11 +135,16 @@ func getAllExercises(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	//Setup DB
 	initDatabase()
 
+
+	// Setup handlers
 	http.HandleFunc("/api/exercises/suggested", suggestExercisesHandler)
 	http.HandleFunc("/api/exercises", getAllExercises)
 
+
+	// Start the server
 	port := ":8080"
 	println("Server is running on http://localhost" + port)
 	if err := http.ListenAndServe(port, nil); err != nil {
