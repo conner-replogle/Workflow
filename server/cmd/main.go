@@ -6,8 +6,6 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-
-	"github.com/conner-replogle/Workflow/server"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -33,28 +31,7 @@ type Workout struct {
 
 var db *gorm.DB
 
-var model *server.Model
 
-func initModel() {
-	modelPath := "../workout_generator/output/keras"
-	file, err := os.Open("../workout_generator/workout_embeddings.json")
-	if err != nil {
-		log.Fatal("Failed to open workout_embeddings.json:", err)
-	}
-	defer file.Close()
-
-	var exercises []string
-	if err := json.NewDecoder(file).Decode(&exercises); err != nil {
-		log.Fatal("Failed to decode workout_embeddings.json:", err)
-	}
-
-	m, err := server.NewModel(modelPath, len(exercises))
-	if err != nil {
-		log.Fatal("Failed to load model:", err)
-	}
-	model = m
-	slog.Debug("Model loaded successfully")
-}
 
 func initDatabase() {
 	var err error
@@ -130,15 +107,15 @@ func suggestExercisesHandler(w http.ResponseWriter, r *http.Request) {
 	slog.Debug("Received previous exercises:", previousExercises)
 	//run model
 
-	predictions, err := model.Predict(previousExercises)
-	if err != nil {
-		slog.Error("Model prediction failed:", "error", err)
-		http.Error(w, "Model prediction failed", http.StatusInternalServerError)
-		return
-	}
-	slog.Debug("Model prediction completed")
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(predictions)
+	// predictions, err := model.Predict(previousExercises)
+	// if err != nil {
+	// 	slog.Error("Model prediction failed:", "error", err)
+	// 	http.Error(w, "Model prediction failed", http.StatusInternalServerError)
+	// 	return
+	// }
+	// slog.Debug("Model prediction completed")
+	// w.Header().Set("Content-Type", "application/json")
+	// json.NewEncoder(w).Encode(predictions)
 
 }
 
@@ -158,7 +135,6 @@ func getAllExercises(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	initDatabase()
-	initModel()
 
 	http.HandleFunc("/api/exercises/suggested", suggestExercisesHandler)
 	http.HandleFunc("/api/exercises", getAllExercises)
