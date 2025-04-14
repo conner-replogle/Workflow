@@ -128,8 +128,9 @@ export const useWorkoutStore = create<WorkoutState>()(
                     }],
                 }
             })
-        });
+        })
     },
+    
     removeExercise: (index: number) => {
         
         set((state) => {

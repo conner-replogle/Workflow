@@ -149,7 +149,7 @@ function AddExercise({previous}: {previous: Exercise[]}) {
       
         
           {
-             exercises.slice(0,2).map((exercise) => (
+             exercises.slice(0,2).map((exercise: Exercise) => (
               <TouchableOpacity
                 key={exercise.id}
                 className="flex-row items-center justify-between p-4 "
