@@ -1,12 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"log"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/exec"
+	"time"
 
+	"github.com/lmittmann/tint"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -104,19 +108,41 @@ func suggestExercisesHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid previous exercises", http.StatusBadRequest)
 		return
 	}
-	slog.Debug("Received previous exercises:", previousExercises)
-	//run model
+	slog.Debug("Received previous exercises:", "prev", previousExercises)
 
-	// predictions, err := model.Predict(previousExercises)
-	// if err != nil {
-	// 	slog.Error("Model prediction failed:", "error", err)
-	// 	http.Error(w, "Model prediction failed", http.StatusInternalServerError)
-	// 	return
-	// }
-	// slog.Debug("Model prediction completed")
-	// w.Header().Set("Content-Type", "application/json")
-	// json.NewEncoder(w).Encode(predictions)
+	// Ensure previousExercises is length 5, pad with zeros at the beginning if needed
+	if len(previousExercises) < 5 {
+		padded := make([]int, 5)
+		copy(padded[5-len(previousExercises):], previousExercises)
+		previousExercises = padded
+	} else if len(previousExercises) > 5 {
+		previousExercises = previousExercises[len(previousExercises)-5:]
+	}
 
+	// Prepare input for Python script
+	input, err := json.Marshal(previousExercises)
+	if err != nil {
+		slog.Error("Failed to marshal input for python script:", "error", err)
+		http.Error(w, "Failed to prepare input", http.StatusInternalServerError)
+		return
+	}
+
+	// Call Python script
+	pyPath := "run.py"
+	cmd := exec.Command("python", pyPath)
+	cmd.Stdin = bytes.NewReader(input)
+	cmd.Stderr = os.Stderr
+	cmd.Dir = "../workout_generator" // Set working directory
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	if err := cmd.Run(); err != nil {
+		slog.Error("Failed to run python model:", "error", err, "output", out.String())
+		http.Error(w, "Failed to run model", http.StatusInternalServerError)
+		return
+	}
+	slog.Debug("Python script output:", "out", out.String())
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(out.Bytes())
 }
 
 func getAllExercises(w http.ResponseWriter, r *http.Request) {
@@ -134,6 +160,14 @@ func getAllExercises(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	w := os.Stderr
+	// set global logger with custom options
+	slog.SetDefault(slog.New(
+		tint.NewHandler(w, &tint.Options{
+			Level:      slog.LevelDebug,
+			TimeFormat: time.Kitchen,
+		}),
+	))
 	//Setup DB
 	initDatabase()
 
