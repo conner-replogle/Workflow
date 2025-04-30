@@ -69,27 +69,31 @@ function ActiveWorkout(){
 
   return (
     <Box className="justify-start w-full h-full">
-      <VStack space="md" reversed={false}>
-        <View className='p-4'>
+      <VStack space="md" className='p-4 h-full'>
+        <View >
           <Heading>{workoutActive?.name}</Heading>
 
             <WorkoutClockTime startingTime={workoutActive?.startTime} stop={workoutActive.endTime ? true : false} />
           
         </View>
-        <ScrollView>
+        <ScrollView contentInset={{ bottom: 200 }} >
         {
                   
 
           workoutActive?.exercises.map((exercise, index) => (
+            <>
             <WorkoutExerciseCard
+            
               key={index}
               exercise={exercise}
               index={index}
             />
+            <Divider className="my-2" />
+            </>
           ))
        
         }
-                   </ScrollView>
+
         {
           workoutActive.exercises.length === 0 && (
             <Center>
@@ -97,7 +101,7 @@ function ActiveWorkout(){
             </Center>
           )
         }
-        <Button
+            <Button
           onPress={() => {
             finishWorkout();
 
@@ -108,6 +112,8 @@ function ActiveWorkout(){
         >
           <ButtonText>Finish Workout</ButtonText>
         </Button>
+        </ScrollView>
+    
         
       </VStack>
       <CompleteWorkoutDialog active={workoutActive.endTime != null} onClose={()=>{

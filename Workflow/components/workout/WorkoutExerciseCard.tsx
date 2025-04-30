@@ -30,7 +30,7 @@ export function WorkoutExerciseCard({
   );
   const panGesture = Gesture.Pan();
   return (
-    <Card size="md" variant="elevated" className="m-3">
+    <Card size="md" variant="elevated" >
         <HStack  className=" p-4 justify-between border-b border-background-20">
             <Heading size="md" >
             {exercise.template.name}
