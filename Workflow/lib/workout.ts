@@ -31,6 +31,9 @@ type ExerciseSet = {
 type User = {
     id: string;
     name: string;
+    age: number;
+    height: number;
+    weight: number;
     email: string;
 
 }

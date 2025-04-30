@@ -25,14 +25,15 @@ export function WorkoutHistoryCard() {
       }
     });
   }, []);
+
+  if (recentWorkout == undefined) {
+    return <Text>No recent workouts found</Text>;
+  }
   const totalWeight = (recentWorkout.exercises || []).reduce((total: number, exercise: any) => {
     return total + ((exercise.sets || []).reduce((setTotal: number, set: any) => {
       return setTotal + ((set.reps || 0) * (set.weight || 0));
     }, 0));
   }, 0);
-  if (!recentWorkout) {
-    return <Text>No recent workouts found</Text>;
-  }
   const workoutDate = recentWorkout.startTime ? new Date(recentWorkout.startTime).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',

@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Platform, ScrollView , View, TextInput, Button, Text } from 'react-native';
+import { Image, StyleSheet, Platform, ScrollView , View, TextInput, Text } from 'react-native';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -9,11 +9,14 @@ import { Divider } from '@/components/ui/divider';
 import { QuickStart } from '@/components/QuickStartWidget';
 import { useApiStore } from '@/lib/useApi';
 import { useEffect, useState } from 'react';
+import { ButtonText,Button } from '@/components/ui/button';
 
 export default function HomeScreen() {
   const workouts = useApiStore((state) => state.workouts);
   const getWorkouts = useApiStore((state) => state.getAllWorkouts);
   const getAllExercises = useApiStore((state) => state.getAllExercises);
+  const user = useApiStore((state) => state.user);
+  const logout = useApiStore((state) => state.logout)
 
   useEffect(() => {
     getWorkouts();
@@ -29,21 +32,23 @@ export default function HomeScreen() {
     <SafeAreaProvider>
       <SafeAreaView style={styles.homeContainer}>
         <ScrollView style={{padding: 10}}>
+          <View className='flex-row items-center justify-between'>
           <Heading className="text-4xl font-bold ">Home</Heading>
+          <Button onPress={() => {
+            logout()
+          }}>
+            <ButtonText>Logout</ButtonText>
+          </Button>
+          </View>
+          
           <Divider className="my-4"/>
+          <Text className="text-2xl font-bold text-gray-500">Hello, {user?.name}</Text>
+
             <QuickStart />
           <Divider className="my-4"/>
             <WorkoutHistoryCard />
           <Divider className="my-4"/>
-          {
-            workouts.map((workout) => {
-              return (
-                <ThemedView key={workout.id} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
-                  <ThemedText className="text-lg font-bold">{workout.name}</ThemedText>
-                </ThemedView>
-              );
-            })
-          }
+
         </ScrollView>
       </SafeAreaView>
     </SafeAreaProvider>

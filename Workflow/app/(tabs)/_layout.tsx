@@ -37,7 +37,14 @@ export default function TabLayout() {
         name="workout"
         options={{
           title: 'Workout',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="play.fill" color={color} />,
+        }}
+      />
+       <Tabs.Screen
+        name="workout_history"
+        options={{
+          title: 'History',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="list.bullet" color={color} />,
         }}
       />
     

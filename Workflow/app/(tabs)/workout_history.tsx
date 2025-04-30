@@ -169,6 +169,7 @@ export default function WorkoutHistory() {
       timeZone: 'UTC'
     });
   };
+  console.log("Filtered Workouts: ", filteredWorkouts);
 
   return (
     <SafeAreaView style={Style.container}>
@@ -235,9 +236,9 @@ export default function WorkoutHistory() {
         {/* Workout History Cards */}
         <ScrollView style={Style.scrollView}>
           {filteredWorkouts.length > 0 ? (
-            filteredWorkouts.map((workout) => {
+            filteredWorkouts.map((workout,i) => {
               const summary = getWorkoutSummary(workout.exercises);
-              const workoutId = workout.id ? workout.id.toString() : '';
+              const workoutId = workout.id
               
               return (
                 <Card 

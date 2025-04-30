@@ -206,9 +206,9 @@ function AddExercise({previous}: {previous: Exercise[]}) {
           </View>
           <Divider/>
         {
-          exercises.map((exercise) => (
+          exercises.map((exercise,index) => (
             <TouchableOpacity
-              key={exercise.id}
+              key={index}
               className="flex-row items-center justify-between p-4"
               onPress={() => {
                 setSelectedExercises((prev) => {

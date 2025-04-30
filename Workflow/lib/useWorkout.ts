@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware'
+import { createJSONStorage, devtools, persist } from 'zustand/middleware'
+import AsyncStorage from '@react-native-async-storage/async-storage';
 interface WorkoutState {
     workout:  Workout | null,
     start: () => void,
@@ -138,6 +139,7 @@ export const useWorkoutStore = create<WorkoutState>()(
             }
             return ({
                 workout: {
+                    
                     ...state.workout,
                     exercises: [...(state.workout?.exercises || []), {
 
@@ -180,7 +182,13 @@ export const useWorkoutStore = create<WorkoutState>()(
 
 
 
-    }),{ name: 'activeWorkout' },
+    }),
+    { 
+        name: 'activeWorkout',   
+    
+        storage:createJSONStorage(()=> AsyncStorage), 
+
+    },
     )));
 
 

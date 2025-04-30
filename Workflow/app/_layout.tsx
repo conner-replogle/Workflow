@@ -27,6 +27,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [age , setAge] = useState(18);
   const [height , setHeight] = useState(170);
   const [weight , setWeight] = useState(70);
@@ -62,33 +63,43 @@ function AuthGate({ children }: { children: React.ReactNode }) {
           {
             mode === 'signup' && (
               <>
-              <Input
-                variant="outline"
-                size="md"
-                isDisabled={false}
-                isInvalid={false}
-                isReadOnly={false}
-              >
-                <InputField placeholder="Age" onChangeText={(text) => setAge(parseInt(text))}/>
-              </Input>
-              <Input
-                variant="outline"
-                size="md"
-                isDisabled={false}
-                isInvalid={false}
-                isReadOnly={false}
-              >
-                <InputField placeholder="Height" onChangeText={(text) => setHeight(parseInt(text))}/>
-              </Input>
-              <Input
-                variant="outline"
-                size="md"
-                isDisabled={false}
-                isInvalid={false}
-                isReadOnly={false}
-              >
-                <InputField placeholder="Weight" onChangeText={(text) => setWeight(parseInt(text))}/>
-              </Input>
+                <Input
+                  variant="outline"
+                  size="md"
+                  isDisabled={false}
+                  isInvalid={false}
+                  isReadOnly={false}
+                >
+                  <InputField placeholder="Name" onChangeText={setName} />
+                </Input>
+                <Input
+                  variant="outline"
+                  size="md"
+                  isDisabled={false}
+                  isInvalid={false}
+                  isReadOnly={false}
+                >
+                  <InputField
+                    placeholder="Age"
+                    keyboardType="numeric"
+                    value={age.toString()}
+                    onChangeText={text => setAge(Number(text))}
+                  />
+                </Input>
+                <Input
+                  variant="outline"
+                  size="md"
+                  isDisabled={false}
+                  isInvalid={false}
+                  isReadOnly={false}
+                >
+                  <InputField
+                    placeholder="Weight (kg)"
+                    keyboardType="numeric"
+                    value={weight.toString()}
+                    onChangeText={text => setWeight(Number(text))}
+                  />
+                </Input>
               </>
             )
           }
@@ -101,7 +112,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
                 if (mode === 'login') {
                   await login(email, password);
                 } else {
-                  await signUp(email, password);
+                  await signUp(email, password,name);
                 }
               } catch (e: any) {
                 setError(e.message || 'An error occurred');

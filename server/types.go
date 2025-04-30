@@ -8,12 +8,15 @@ import (
 
 type User struct {
 	gorm.Model
+	Name     string `json:"name"`
 	Email    string `gorm:"unique" json:"email"`
 	Password string `json:"password"` // Store hashed password!
+	Age      int    `json:"age"`
+	Weight   int    `json:"weight"`
 }
 
 type Workout struct {
-	gorm.Model
+	ID        uint              `gorm:"primarykey" json:"id"`
 	UserID    uint              `json:"userId"`
 	StartTime time.Time         `json:"startTime"`
 	EndTime   time.Time         `json:"endTime"`

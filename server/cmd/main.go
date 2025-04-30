@@ -112,10 +112,8 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	var req struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
+	var req server.User
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
@@ -129,14 +127,14 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to hash password", http.StatusInternalServerError)
 		return
 	}
-	user := server.User{Email: req.Email, Password: hashed}
-	if err := db.Create(&user).Error; err != nil {
+	req.Password = hashed
+	if err := db.Create(&req).Error; err != nil {
 		http.Error(w, "email already exists", http.StatusConflict)
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]interface{}{"id": user.ID, "email": user.Email})
-	slog.Debug("User signed up", "userID", user.ID, "email", user.Email)
+	json.NewEncoder(w).Encode(map[string]interface{}{"id": req.ID, "email": req.Email, "name": req.Name})
+	slog.Debug("User signed up", "userID", req.ID, "email", req.Email)
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
@@ -169,7 +167,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})
-	json.NewEncoder(w).Encode(map[string]interface{}{"id": user.ID, "email": user.Email})
+	json.NewEncoder(w).Encode(map[string]interface{}{"id": user.ID, "email": user.Email, "name": user.Name})
 	slog.Debug("User logged in", "userID", user.ID, "email", user.Email)
 }
 

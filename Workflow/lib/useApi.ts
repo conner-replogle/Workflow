@@ -1,5 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware'
+import { createJSONStorage, devtools, persist } from 'zustand/middleware'
 interface ApiState {
     workouts: Workout[];
     exercises: Exercise[];
@@ -7,7 +8,7 @@ interface ApiState {
     authToken: string | null;
 
     login: (email: string, password: string) => Promise<void>;
-    signUp: (email: string, password: string) => Promise<void>;
+    signUp: (email: string, password: string,name: string) => Promise<void>;
     logout: () => Promise<void>;
 
     getAllWorkouts: () => Promise<void>;
@@ -15,11 +16,12 @@ interface ApiState {
     getAllExercises: () => Promise<void>;
 
 }
-const API_URL = 'http://192.168.0.145:8080';
+const API_URL = 'http://localhost:8080';
 
 
 // Define the store
-export const useApiStore = create<ApiState>()(
+export const useApiStore = create<ApiState>()(devtools(
+    persist(
    (set, get) => ({
     exercises: [],
     user: null,
@@ -90,14 +92,14 @@ export const useApiStore = create<ApiState>()(
         console.log('Logged in:', data);
         set({ user: data });
     },
-    signUp: async (email: string, password: string) => {
+    signUp: async (email: string, password: string,name: string) => {
         console.log('Signing up...');
         const response = await fetch(`${API_URL}/api/auth/signup`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ email, password ,name}),
         });
         if (!response.ok) {
             console.error('Network response was not ok', response.statusText);
@@ -109,20 +111,10 @@ export const useApiStore = create<ApiState>()(
     }
     ,
     logout: async () => {
-        console.log('Logging out...');
-        const response = await fetch(`${API_URL}/api/auth/logout`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        });
-        if (!response.ok) {
-            console.error('Network response was not ok', response.statusText);
-            throw new Error('Network response was not ok');
-        }
+        
         set({ user: null });
     }
-    }),
+    }),{ name: 'account' ,  storage:createJSONStorage(()=> AsyncStorage), })),
 
 );
 
