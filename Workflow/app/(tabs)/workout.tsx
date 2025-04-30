@@ -66,14 +66,15 @@ function ActiveWorkout(){
   if (!workoutActive) {
     return null;
   }
+  console.log(workoutActive)
 
   return (
     <Box className="justify-start w-full h-full">
-      <VStack space="md" className='p-4 h-full'>
+      <View  className='p-4 h-full gap-3'>
         <View >
-          <Heading>{workoutActive?.name}</Heading>
+          <Heading>{workoutActive.name}</Heading>
 
-            <WorkoutClockTime startingTime={workoutActive?.startTime} stop={workoutActive.endTime ? true : false} />
+            <WorkoutClockTime startingTime={workoutActive.startTime} stop={workoutActive.endTime ? true : false} />
           
         </View>
         <ScrollView contentInset={{ bottom: 200 }} >
@@ -84,7 +85,7 @@ function ActiveWorkout(){
             <>
             <WorkoutExerciseCard
             
-              key={index}
+              key={`exercise-${index}`}
               exercise={exercise}
               index={index}
             />
@@ -96,7 +97,7 @@ function ActiveWorkout(){
 
         {
           workoutActive.exercises.length === 0 && (
-            <Center>
+            <Center key="no-exercises">
               <Text>No Exercises Added</Text>
             </Center>
           )
@@ -113,9 +114,9 @@ function ActiveWorkout(){
           <ButtonText>Finish Workout</ButtonText>
         </Button>
         </ScrollView>
-    
+    </View>
         
-      </VStack>
+
       <CompleteWorkoutDialog active={workoutActive.endTime != null} onClose={()=>{
         clearWOrkout();
       }}  />
@@ -176,7 +177,7 @@ function AddExercise({previous}: {previous: Exercise[]}) {
 
         <ScrollView contentInset={{ bottom: 200 }} >
       
-          <View className='min-h-20'>
+          <View className='min-h-32'>
           {
              suggested.map((exercise: Exercise) => (
               <TouchableOpacity

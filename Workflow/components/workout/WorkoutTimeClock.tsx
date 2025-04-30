@@ -5,6 +5,7 @@ export function WorkoutClockTime({ startingTime ,stop}: { startingTime: Date ,st
     const [elapsedTime, setElapsedTime] = useState(0);
 
     useEffect(() => {
+        startingTime = new Date(startingTime)
         if (stop){
             const now = new Date();
             const diffInSeconds = Math.floor((now.getTime() - startingTime.getTime()) / 1000);

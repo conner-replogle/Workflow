@@ -56,6 +56,9 @@ export const useApiStore = create<ApiState>()(devtools(
     saveWorkout: async (workout: Workout) => { 
         console.log('Saving workout...');
         const authToken = get().authToken;
+        workout.exercises.forEach((a) =>{
+            a.templateID = a.template.id
+        })
         const response = await fetch(`${API_URL}/api/workouts`, {
             method: 'POST',
             headers: {

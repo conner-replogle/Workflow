@@ -247,7 +247,7 @@ export default function WorkoutHistory() {
                   variant="filled"
                   style={Style.workoutCard}
                 >
-                  <TouchableOpacity onPress={() => viewWorkoutDetail(workoutId)}>
+                  <TouchableOpacity onPress={() => viewWorkoutDetail(workoutId!)}>
                     <VStack space="sm">
                       {/* Header - Always visible */}
                       <HStack className="justify-between items-center">

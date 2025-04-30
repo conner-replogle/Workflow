@@ -1,5 +1,6 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand"
-import {devtools, persist} from "zustand/middleware"
+import {createJSONStorage, devtools, persist} from "zustand/middleware"
 
 type QuickButton = {
     id: string,
@@ -42,5 +43,5 @@ export const useHomeScreenStore = create<HomeScreenState>()(
             setQuickButtons: (quickButtons: QuickButton[]) => {
                 set({quickButtons})
             },
-        }),{name: 'homescreen'},
+        }),{name: 'homescreen',        storage:createJSONStorage(()=> AsyncStorage),         },
     )));

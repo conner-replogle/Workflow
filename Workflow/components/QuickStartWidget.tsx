@@ -27,6 +27,8 @@ export function QuickStart() {
     const updateQuickButtonExercises = useHomeScreenStore((state) => state.updateQuickButtonExercises);
     const exercises = useApiStore((state) => state.exercises);
     const activeWorkout = useWorkoutStore((state) => state.workout);
+    const startWorkout = useWorkoutStore((state) => state.start)
+    const addExercise = useWorkoutStore((state) => state.addExercise)
 
     const currentEditingButton = React.useMemo(() => {
         if (!editingButtonId) return null;
@@ -68,14 +70,15 @@ export function QuickStart() {
     }, [activeWorkout]);
 
     const startNewWorkout = React.useCallback((buttonId: string) => {
-        router.push('/workout');
-        useWorkoutStore.getState().start();
+        startWorkout()
         const targetButton = quickButtons.find(b => b.id === buttonId);
         if (targetButton?.exercises?.length) {
             for (const exercise of targetButton.exercises) {
-                useWorkoutStore.getState().addExercise(exercise);
+                addExercise(exercise)
             }
         }
+        router.push('/workout');
+
     }, [quickButtons]);
 
     const handleNameChange = React.useCallback((text: string) => {

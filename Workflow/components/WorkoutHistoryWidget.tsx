@@ -29,6 +29,9 @@ export function WorkoutHistoryCard() {
   if (recentWorkout == undefined) {
     return <Text>No recent workouts found</Text>;
   }
+  recentWorkout.startTime = new Date(recentWorkout.startTime)
+  recentWorkout.endTime =recentWorkout.endTime? new Date(recentWorkout.endTime): undefined
+
   const totalWeight = (recentWorkout.exercises || []).reduce((total: number, exercise: any) => {
     return total + ((exercise.sets || []).reduce((setTotal: number, set: any) => {
       return setTotal + ((set.reps || 0) * (set.weight || 0));
