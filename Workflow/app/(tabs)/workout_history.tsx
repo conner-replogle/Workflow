@@ -22,7 +22,6 @@ import { useApiStore } from '@/lib/useApi';
 import { HStack } from '@/components/ui/hstack';
 import { Card } from '@/components/ui/card';
 import { Divider } from '@/components/ui/divider';
-import { router } from 'expo-router';
 import { Calendar, DateData } from 'react-native-calendars';
 import Style  from '@/lib/workoutHistoryStyle';
 // Placeholder workout history data

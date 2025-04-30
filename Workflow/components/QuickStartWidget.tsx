@@ -7,7 +7,7 @@ import { VStack } from "./ui/vstack";
 import { Button, TextInput, TouchableOpacity, View, StyleSheet } from "react-native";
 import { Box } from "./ui/box";
 import { ModalBackdrop, Modal,ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter } from '@/components/ui/modal';
-import { router, useRouter } from "expo-router";
+import { router } from "expo-router";
 import React from 'react';
 import { useHomeScreenStore } from "@/lib/homescreen";
 import { useWorkoutStore } from "@/lib/useWorkout";
@@ -161,7 +161,7 @@ export function QuickStart() {
                         <TextInput
                             placeholder="Button Name"
                             style={styles.textInput}
-                            value={currentName}
+                            defaultValue={currentName}
                             onChangeText={handleNameChange}
                             maxLength={20}
                         />
