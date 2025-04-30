@@ -259,7 +259,7 @@ export default function WorkoutHistory() {
                         <Icon 
                           as={expandedWorkout === workoutId ? ChevronUpIcon : ChevronDownIcon} 
                           size="md"
-                          color={theme.primary}
+                          color={theme.textPrimary}
                         />
                       </HStack>
                       
@@ -358,7 +358,7 @@ function WorkoutExerciseHistoryCard({ exercise }: { exercise: any }) {
           <Icon 
             as={expanded ? ChevronUpIcon : ChevronDownIcon} 
             size="sm" 
-            color={theme.primary}
+            color={theme.textPrimary}
           />
         </HStack>
         
