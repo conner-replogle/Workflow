@@ -175,7 +175,6 @@ function AddExercise({previous}: {previous: Exercise[]}) {
       <ModalBody >
       <Divider/>
 
-        <ScrollView contentInset={{ bottom: 200 }} >
       
           <View className='min-h-32'>
           {
@@ -204,8 +203,8 @@ function AddExercise({previous}: {previous: Exercise[]}) {
             ))
           
         }
-          </View>
-          <Divider/>
+        </View>
+        <Divider/>
         {
           exercises.map((exercise,index) => (
             <TouchableOpacity
@@ -230,7 +229,7 @@ function AddExercise({previous}: {previous: Exercise[]}) {
             </TouchableOpacity>
           ))
         }
-        </ScrollView>
+     
         
       </ModalBody>
       <ModalFooter>
