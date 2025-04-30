@@ -119,8 +119,9 @@ export const useWorkoutStore = create<WorkoutState>()(
                                 ...ex,
                                 sets: [...ex.sets, {
                                 
-                                    reps: 0,
-                                    weight: 0,
+                                    reps: ex.sets.at(-1)?.reps || 12,
+                                    
+                                    weight: ex.sets.at(-1)?.weight || 140,
                                 }],
                             }
                         }
@@ -141,7 +142,20 @@ export const useWorkoutStore = create<WorkoutState>()(
                     exercises: [...(state.workout?.exercises || []), {
 
                         template: exercise,
-                        sets: [],
+                        sets: [
+                            {
+                                reps: state.workout.exercises.at(-1)?.sets.at(-1)?.reps || 12,
+                                weight: state.workout.exercises.at(-1)?.sets.at(-1)?.weight || 140,
+                            },
+                            {
+                                reps: state.workout.exercises.at(-1)?.sets.at(-1)?.reps || 12,
+                                weight: state.workout.exercises.at(-1)?.sets.at(-1)?.weight || 140,
+                            },
+                            {
+                                reps: state.workout.exercises.at(-1)?.sets.at(-1)?.reps || 12,
+                                weight: state.workout.exercises.at(-1)?.sets.at(-1)?.weight || 140,
+                            }
+                        ],
                     }],
                 }
             })

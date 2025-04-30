@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useApiStore } from "./useApi";
 
-export function useSuggestedExercises(previous: Exercise[]){
+export function useSuggestedExercises(previous: number[]){
     const [suggestedExercises, setSuggestedExercises] = useState<Exercise[]>([]);
     const exercises = useApiStore((state) => state.exercises);
   
     
     useEffect(() => {
-        let path = `http://localhost:8080/api/exercises/suggested?previous=${encodeURI(JSON.stringify(previous.map((a)=>a.id!)))}`
+        let path = `http://localhost:8080/api/exercises/suggested?previous=${encodeURI(JSON.stringify(previous))}`
         fetch(path, {
             
         })

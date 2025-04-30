@@ -16,7 +16,7 @@ import { Box } from '@/components/ui/box';
 import { VStack } from '@/components/ui/vstack';
 import { WorkoutClockTime } from '@/components/workout/WorkoutTimeClock';
 import { Icon, EditIcon, AddIcon, CloseIcon, RemoveIcon, InfoIcon } from "@/components/ui/icon"
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ModalBackdrop, Modal,ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter } from '@/components/ui/modal';
 
 
@@ -73,7 +73,7 @@ function ActiveWorkout(){
         <View className='p-4'>
           <Heading>{workoutActive?.name}</Heading>
 
-            <WorkoutClockTime startingTime={workoutActive?.startTime} stop={workoutActive.endTime ? false : true} />
+            <WorkoutClockTime startingTime={workoutActive?.startTime} stop={workoutActive.endTime ? true : false} />
           
         </View>
         <ScrollView>
@@ -126,7 +126,10 @@ function AddExercise({previous}: {previous: Exercise[]}) {
   const [selectedExercises,setSelectedExercises]  = React.useState<Exercise[]>([])
   const addExercise = useWorkoutStore((state) => state.addExercise);
   const exercises = useApiStore((state) => state.exercises);
-  const suggested = useSuggestedExercises(previous);
+  const previousIDs = useMemo(() => {
+    return previous.map((v) => v.id!);
+  }, [previous]);
+  const suggested = useSuggestedExercises(previousIDs);
   return (
     <>
     <TouchableOpacity
@@ -165,9 +168,9 @@ function AddExercise({previous}: {previous: Exercise[]}) {
       <ModalBody >
       <Divider/>
 
-        <ScrollView>
+        <ScrollView contentInset={{ bottom: 200 }} >
       
-        
+          <View className='min-h-20'>
           {
              suggested.map((exercise: Exercise) => (
               <TouchableOpacity
@@ -192,7 +195,9 @@ function AddExercise({previous}: {previous: Exercise[]}) {
                   <Icon as={AddIcon} size="md" />}
               </TouchableOpacity>
             ))
+          
         }
+          </View>
           <Divider/>
         {
           exercises.map((exercise) => (

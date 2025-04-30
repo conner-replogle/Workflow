@@ -13,12 +13,13 @@ import { useEffect, useState } from 'react';
 export default function HomeScreen() {
   const workouts = useApiStore((state) => state.workouts);
   const getWorkouts = useApiStore((state) => state.getAllWorkouts);
+  const getAllExercises = useApiStore((state) => state.getAllExercises);
+
   useEffect(() => {
-    getWorkouts().catch((err) => {
-      if (err) {
-        console.log(err);
-      }
-    });
+    getWorkouts();
+      
+    getAllExercises();
+
   }
   , []);
   
