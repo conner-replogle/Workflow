@@ -8,31 +8,14 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"server"
+
 	"time"
 
 	"github.com/lmittmann/tint"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
-
-type Exercise struct {
-	ID          uint   `json:"id" gorm:"primaryKey"`
-	Name        string `json:"name" gorm:"unique"`
-	Description string `json:"description"`
-}
-
-type WorkoutExercise struct {
-	ID         uint     `json:"id" gorm:"primaryKey"`
-	WorkoutID  uint     `json:"workout_id"`
-	Workout    Workout  `json:"workout" gorm:"foreignKey:WorkoutID"`
-	ExerciseID uint     `json:"exercise_id"`
-	Exercise   Exercise `json:"exercise" gorm:"foreignKey:ExerciseID"`
-}
-
-type Workout struct {
-	ID   uint   `json:"id" gorm:"primaryKey"`
-	Name string `json:"name"`
-}
 
 var db *gorm.DB
 
@@ -44,7 +27,7 @@ func initDatabase() {
 	}
 
 	// Migrate the schema
-	err = db.AutoMigrate(&Exercise{}, &Workout{})
+	err = db.AutoMigrate(&server.Exercise{}, &server.Workout{})
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)
 	}
@@ -69,11 +52,11 @@ func initDatabase() {
 			continue
 		}
 		// Check if the exercise already exists
-		var existingExercise Exercise
+		var existingExercise server.Exercise
 		if err := db.Where("name = ?", exercise).First(&existingExercise).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
 				// Create a new exercise if it doesn't exist
-				newExercise := Exercise{
+				newExercise := server.Exercise{
 					Name: exercise,
 				}
 				if err := db.Create(&newExercise).Error; err != nil {
@@ -84,14 +67,13 @@ func initDatabase() {
 			}
 		} else {
 			//update the existing exercise
-			slog.Debug("Exercise already exists:", existingExercise)
 			existingExercise.Description = exercise
 			existingExercise.Name = exercise
 			err := db.UpdateColumns(&existingExercise).Error
 			if err != nil {
 				slog.Error("Failed to update exercise:", "error", err, "exercise", existingExercise)
 			}
-			slog.Debug("Updated exercise:", existingExercise)
+			slog.Debug("Updated exercise:", "exercises", existingExercise)
 		}
 	}
 }
@@ -152,11 +134,49 @@ func getAllExercises(w http.ResponseWriter, r *http.Request) {
 	}
 	slog.Debug("Fetching all exercises")
 
-	var exercises []Exercise
+	var exercises []server.Exercise
 	db.Find(&exercises)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(exercises)
+}
+
+func storeWorkoutHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var workout server.Workout
+	if err := json.NewDecoder(r.Body).Decode(&workout); err != nil {
+		slog.Error("Failed to decode workout:", "error", err)
+		http.Error(w, "Invalid workout data", http.StatusBadRequest)
+		return
+	}
+	if err := db.Create(&workout).Error; err != nil {
+		slog.Error("Failed to store workout:", "error", err)
+		http.Error(w, "Failed to store workout", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(workout)
+}
+
+func getAllWorkoutsHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	slog.Debug("Fetching all workouts")
+
+	var workouts []server.Workout
+	if err := db.Preload("Exercises.Sets").Preload("Exercises.Template").Find(&workouts).Error; err != nil {
+		slog.Error("Failed to fetch workouts:", "error", err)
+		http.Error(w, "Failed to fetch workouts", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(workouts)
 }
 
 func main() {
@@ -174,6 +194,16 @@ func main() {
 	// Setup handlers
 	http.HandleFunc("/api/exercises/suggested", suggestExercisesHandler)
 	http.HandleFunc("/api/exercises", getAllExercises)
+	http.HandleFunc("/api/workouts", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			storeWorkoutHandler(w, r)
+		case http.MethodGet:
+			getAllWorkoutsHandler(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
 
 	// Start the server
 	port := ":8080"
