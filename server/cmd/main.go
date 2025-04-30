@@ -12,7 +12,10 @@ import (
 
 	"time"
 
+	"strconv"
+
 	"github.com/lmittmann/tint"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -27,7 +30,7 @@ func initDatabase() {
 	}
 
 	// Migrate the schema
-	err = db.AutoMigrate(&server.Exercise{}, &server.Workout{})
+	err = db.AutoMigrate(&server.User{}, &server.Exercise{}, &server.Workout{})
 	if err != nil {
 		log.Fatal("Failed to migrate database:", err)
 	}
@@ -78,6 +81,149 @@ func initDatabase() {
 	}
 }
 
+// --- Auth helpers ---
+
+func hashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	return string(bytes), err
+}
+
+func checkPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
+}
+
+func getUserIDFromRequest(r *http.Request) (uint, error) {
+	cookie, err := r.Cookie("session_id")
+	if err != nil {
+		return 0, err
+	}
+	userID, err := strconv.ParseUint(cookie.Value, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return uint(userID), nil
+}
+
+// --- Auth Handlers ---
+
+func signupHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+	if req.Email == "" || req.Password == "" {
+		http.Error(w, "email and password required", http.StatusBadRequest)
+		return
+	}
+	hashed, err := hashPassword(req.Password)
+	if err != nil {
+		http.Error(w, "Failed to hash password", http.StatusInternalServerError)
+		return
+	}
+	user := server.User{Email: req.Email, Password: hashed}
+	if err := db.Create(&user).Error; err != nil {
+		http.Error(w, "email already exists", http.StatusConflict)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]interface{}{"id": user.ID, "email": user.Email})
+	slog.Debug("User signed up", "userID", user.ID, "email", user.Email)
+}
+
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+	var user server.User
+	if err := db.Where("email = ?", req.Email).First(&user).Error; err != nil {
+		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		return
+	}
+	if !checkPasswordHash(req.Password, user.Password) {
+		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		return
+	}
+	// Set session cookie (just user ID for demo; use JWT or secure session in production)
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_id",
+		Value:    strconv.FormatUint(uint64(user.ID), 10),
+		Path:     "/",
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	})
+	json.NewEncoder(w).Encode(map[string]interface{}{"id": user.ID, "email": user.Email})
+	slog.Debug("User logged in", "userID", user.ID, "email", user.Email)
+}
+
+// --- Workout Handlers (with user scoping) ---
+
+func storeWorkoutHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	userID, err := getUserIDFromRequest(r)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	var workout server.Workout
+	if err := json.NewDecoder(r.Body).Decode(&workout); err != nil {
+		slog.Error("Failed to decode workout:", "error", err)
+		http.Error(w, "Invalid workout data", http.StatusBadRequest)
+		return
+	}
+	workout.UserID = userID
+	if err := db.Create(&workout).Error; err != nil {
+		slog.Error("Failed to store workout:", "error", err)
+		http.Error(w, "Failed to store workout", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(workout)
+}
+
+func getAllWorkoutsHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	userID, err := getUserIDFromRequest(r)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	slog.Debug("Fetching all workouts for user", "userID", userID)
+
+	var workouts []server.Workout
+	if err := db.Where("user_id = ?", userID).Find(&workouts).Error; err != nil {
+		slog.Error("Failed to fetch workouts:", "error", err)
+		http.Error(w, "Failed to fetch workouts", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(workouts)
+}
+
 func suggestExercisesHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -90,7 +236,6 @@ func suggestExercisesHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid previous exercises", http.StatusBadRequest)
 		return
 	}
-	slog.Debug("Received previous exercises:", "prev", previousExercises)
 
 	// Ensure previousExercises is length 5, pad with zeros at the beginning if needed
 	if len(previousExercises) < 5 {
@@ -122,7 +267,6 @@ func suggestExercisesHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to run model", http.StatusInternalServerError)
 		return
 	}
-	slog.Debug("Python script output:", "out", out.String())
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(out.Bytes())
 }
@@ -141,44 +285,6 @@ func getAllExercises(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(exercises)
 }
 
-func storeWorkoutHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-	var workout server.Workout
-	if err := json.NewDecoder(r.Body).Decode(&workout); err != nil {
-		slog.Error("Failed to decode workout:", "error", err)
-		http.Error(w, "Invalid workout data", http.StatusBadRequest)
-		return
-	}
-	if err := db.Create(&workout).Error; err != nil {
-		slog.Error("Failed to store workout:", "error", err)
-		http.Error(w, "Failed to store workout", http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(workout)
-}
-
-func getAllWorkoutsHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-	slog.Debug("Fetching all workouts")
-
-	var workouts []server.Workout
-	if err := db.Preload("Exercises.Sets").Preload("Exercises.Template").Find(&workouts).Error; err != nil {
-		slog.Error("Failed to fetch workouts:", "error", err)
-		http.Error(w, "Failed to fetch workouts", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(workouts)
-}
-
 func main() {
 	w := os.Stderr
 	// set global logger with custom options
@@ -192,6 +298,8 @@ func main() {
 	initDatabase()
 
 	// Setup handlers
+	http.HandleFunc("/api/auth/signup", signupHandler)
+	http.HandleFunc("/api/auth/login", loginHandler)
 	http.HandleFunc("/api/exercises/suggested", suggestExercisesHandler)
 	http.HandleFunc("/api/exercises", getAllExercises)
 	http.HandleFunc("/api/workouts", func(w http.ResponseWriter, r *http.Request) {

@@ -17,6 +17,7 @@
   "dependencies": {
     "@expo/html-elements": "^0.4.2",
     "@expo/vector-icons": "^14.0.2",
+    "@gluestack-ui/alert-dialog": "^0.1.38",
     "@gluestack-ui/button": "^1.0.14",
     "@gluestack-ui/divider": "^0.1.10",
     "@gluestack-ui/icon": "^0.1.27",

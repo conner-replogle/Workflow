@@ -1,13 +1,24 @@
 package server
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
+
+type User struct {
+	gorm.Model
+	Email    string `gorm:"unique" json:"email"`
+	Password string `json:"password"` // Store hashed password!
+}
 
 type Workout struct {
-	ID        string            `gorm:"primaryKey" json:"id"`
+	gorm.Model
+	UserID    uint              `json:"userId"`
 	StartTime time.Time         `json:"startTime"`
 	EndTime   time.Time         `json:"endTime"`
 	Name      string            `json:"name"`
-	Exercises []WorkoutExercise `gorm:"foreignKey:WorkoutID" json:"exercises"`
+	Exercises []WorkoutExercise `json:"exercises" gorm:"serializer:json"`
 }
 
 type Exercise struct {
@@ -17,16 +28,12 @@ type Exercise struct {
 }
 
 type WorkoutExercise struct {
-	ID         int           `gorm:"primaryKey" json:"id"`
-	WorkoutID  string        `json:"workoutId"`
-	TemplateID int           `json:"templateId"`
-	Template   Exercise      `gorm:"foreignKey:TemplateID" json:"template"`
-	Sets       []ExerciseSet `gorm:"foreignKey:WorkoutExerciseID" json:"sets"`
+	TemplateID int           `json:"templateID"`
+	Sets       []ExerciseSet `json:"sets"`
 }
 
 type ExerciseSet struct {
-	ID                string `gorm:"primaryKey" json:"id"`
-	WorkoutExerciseID int    `json:"workoutExerciseId"`
-	Weight            int    `json:"weight"`
-	Reps              int    `json:"reps"`
+	WorkoutExerciseID int `json:"workoutExerciseId"`
+	Weight            int `json:"weight"`
+	Reps              int `json:"reps"`
 }

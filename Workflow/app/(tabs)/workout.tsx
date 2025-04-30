@@ -35,6 +35,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Divider } from '@/components/ui/divider';
 import { useApiStore } from '@/lib/useApi';
 import { useSuggestedExercises } from '@/lib/suggested';
+import { CompleteWorkoutDialog } from '@/components/WorkoutComplete';
 export default function Workout() {
   const workoutActive = useWorkoutStore((state) => state.workout);
   const startWorkout = useWorkoutStore((state) => state.start);
@@ -59,6 +60,9 @@ export default function Workout() {
 
 function ActiveWorkout(){
   const workoutActive = useWorkoutStore((state) => state.workout);
+  const finishWorkout = useWorkoutStore((state) => state.finish);
+  const clearWOrkout = useWorkoutStore((state) => state.clear);
+
   if (!workoutActive) {
     return null;
   }
@@ -68,7 +72,9 @@ function ActiveWorkout(){
       <VStack space="md" reversed={false}>
         <View className='p-4'>
           <Heading>{workoutActive?.name}</Heading>
-          <WorkoutClockTime startingTime={workoutActive?.startTime} />
+
+            <WorkoutClockTime startingTime={workoutActive?.startTime} stop={workoutActive.endTime ? false : true} />
+          
         </View>
         <ScrollView>
         {
@@ -91,8 +97,22 @@ function ActiveWorkout(){
             </Center>
           )
         }
+        <Button
+          onPress={() => {
+            finishWorkout();
+
+          }}
+          size="lg"
+          variant="solid"
+          action="primary"
+        >
+          <ButtonText>Finish Workout</ButtonText>
+        </Button>
         
       </VStack>
+      <CompleteWorkoutDialog active={workoutActive.endTime != null} onClose={()=>{
+        clearWOrkout();
+      }}  />
       <AddExercise previous={workoutActive.exercises.map((v) => v.template)} />
     
     </Box>

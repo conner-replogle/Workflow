@@ -1,11 +1,18 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware'
 interface ApiState {
-
-
+    workouts: Workout[];
     exercises: Exercise[];
+    user: User | null;
+    authToken: string | null;
 
-    getAllExercises: () => void;
+    login: (email: string, password: string) => Promise<void>;
+    signUp: (email: string, password: string) => Promise<void>;
+    logout: () => Promise<void>;
+
+    getAllWorkouts: () => Promise<void>;
+    saveWorkout: (workout: Workout) => Promise<void>;
+    getAllExercises: () => Promise<void>;
 
 }
 const API_URL = 'http://localhost:8080';
@@ -13,9 +20,11 @@ const API_URL = 'http://localhost:8080';
 
 // Define the store
 export const useApiStore = create<ApiState>()(
-   (set) => ({
-
+   (set, get) => ({
     exercises: [],
+    user: null,
+    authToken: null,
+    workouts: [],
     getAllExercises: async () => {
         console.log('Fetching exercises...');
         const response = await fetch(`${API_URL}/api/exercises`);
@@ -24,14 +33,97 @@ export const useApiStore = create<ApiState>()(
             throw new Error('Network response was not ok');
         }
         const data = await response.json();
-        console.log('Fetched exercises:', data);
         set({ exercises: data });
     },
 
+    getAllWorkouts: async () => {
+        console.log('Fetching workouts...');
+        const authToken = get().authToken;
+        const response = await fetch(`${API_URL}/api/workouts`, {
+            headers: {
+                ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+            },
+        });
+        if (!response.ok) {
+            console.error('Network response was not ok', response.statusText);
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        set({ workouts: data });
+    },
+    saveWorkout: async (workout: Workout) => { 
+        console.log('Saving workout...');
+        const authToken = get().authToken;
+        const response = await fetch(`${API_URL}/api/workouts`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+            },
+            body: JSON.stringify(workout),
+        });
+        if (!response.ok) {
+            console.error('Network response was not ok', response.statusText);
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        console.log('Saved workout:', data);
+        set((state) => ({
+            workouts: [...state.workouts, data],
+        }));
+    },
 
+    login: async (email: string, password: string) => {
+        console.log('Logging in...');
+        const response = await fetch(`${API_URL}/api/auth/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password }),
+        });
+        if (!response.ok) {
+            console.error('Network response was not ok', response.statusText);
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        console.log('Logged in:', data);
+        set({ user: data });
+    },
+    signUp: async (email: string, password: string) => {
+        console.log('Signing up...');
+        const response = await fetch(`${API_URL}/api/auth/signup`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password }),
+        });
+        if (!response.ok) {
+            console.error('Network response was not ok', response.statusText);
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        console.log('Signed up:', data);
+        set({ user: data });
+    }
+    ,
+    logout: async () => {
+        console.log('Logging out...');
+        const response = await fetch(`${API_URL}/api/auth/logout`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        if (!response.ok) {
+            console.error('Network response was not ok', response.statusText);
+            throw new Error('Network response was not ok');
+        }
+        set({ user: null });
+    }
+    }),
 
-
-})
 );
 
 

@@ -3,6 +3,8 @@ import { devtools, persist } from 'zustand/middleware'
 interface WorkoutState {
     workout:  Workout | null,
     start: () => void,
+    finish: () => void,
+    clear: () => void,
     addSet: (index: number) => void,
     removeSet: (index: number, setIndex: number) => void,
     addExercise: (exercise: Exercise) => void,
@@ -25,6 +27,21 @@ export const useWorkoutStore = create<WorkoutState>()(
                 startTime: new Date(),
                 exercises: [],
             },
+        }));
+    },
+    finish: () => {
+        
+        set((state) => ({
+            workout: {
+                ...state.workout!,
+                endTime: new Date(),
+                
+            },
+        }));
+    },
+    clear: () => {
+        set(() => ({
+            workout: null,
         }));
     },
 

@@ -26,3 +26,11 @@ type ExerciseSet = {
     reps?: number;
     completed?: boolean;
 }
+
+
+type User = {
+    id: string;
+    name: string;
+    email: string;
+
+}
