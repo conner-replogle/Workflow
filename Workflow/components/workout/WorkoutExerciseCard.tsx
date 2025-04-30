@@ -106,7 +106,7 @@ export function WorkoutExerciseCard({
                 keyboardType="numeric"
               />
               </View>
-              <TouchableOpacity className="w-1/6" onPress={() => updateSet(index, setIndex, {
+              <TouchableOpacity hitSlop={{left:20, top:10,bottom:10,right:20}} className="w-1/6" onPress={() => updateSet(index, setIndex, {
                 ...set,
                 completed: !set.completed,
               })}>
