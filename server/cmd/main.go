@@ -199,6 +199,7 @@ func storeWorkoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(workout)
+	slog.Debug("Workout stored", "userID", userID, "workoutID", workout.ID)
 }
 
 func getAllWorkoutsHandler(w http.ResponseWriter, r *http.Request) {
@@ -222,6 +223,7 @@ func getAllWorkoutsHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(workouts)
+	slog.Debug("Fetched workouts", "userID", userID, "workouts", len(workouts))
 }
 
 func suggestExercisesHandler(w http.ResponseWriter, r *http.Request) {
@@ -269,6 +271,7 @@ func suggestExercisesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(out.Bytes())
+	slog.Debug("Suggested exercises", "previousExercises", previousExercises, "output", out.String())
 }
 
 func getAllExercises(w http.ResponseWriter, r *http.Request) {
@@ -276,13 +279,13 @@ func getAllExercises(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	slog.Debug("Fetching all exercises")
 
 	var exercises []server.Exercise
 	db.Find(&exercises)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(exercises)
+	slog.Debug("Fetched all exercises", "exercises", len(exercises))
 }
 
 func main() {
