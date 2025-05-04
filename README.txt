@@ -52,47 +52,43 @@ names should exactly match. It is not necessary that these are consistent with p
 Reports. However, it is critical that the final UML diagrams in final report and the final code are
 consistent.
 
+Here's a revised version of the setup instructions, focusing on clarity and conciseness:
 
-## Setup
+**Setup Instructions**
 
-There are 3 parts of this project.
+This project has two main components: a Workflow App and a server.
 
-Part 1 Workflow App:
-Go to the /Workflow Directory
-The worflow app is a react native app that utilizes Expo for the build process.
-In order to launch you need one of the following
- - Android Studio
- - IOS simulator (Mac only)
- - IOS/Android Device with expo go installed (This requires modifying the server api env var)
+**Part 1: Workflow App (React Native)**
 
-Regardless of the method you need to install node js
-https://nodejs.org/en/download
+The Workflow App is a React Native application built using Expo. To run it, follow these steps:
 
-Next run 
-``npm install``
+1.  **Navigate to the Workflow Directory:** Open your terminal and navigate to the `/Workflow` directory.
+2.  **Install Node.js:** Ensure Node.js is installed. If not, download it from [https://nodejs.org/en/download](https://nodejs.org/en/download).
+3.  **Install Dependencies:** Run `npm install` to install the project's dependencies.
+4.  **Start the App:** Run `npm run start`. This will open a dialog with options to launch the app:
 
-Next run
-``npm run start``
+    *   **Android Studio:** Launch in an Android emulator.
+    *   **iOS Simulator (macOS only):** Launch in the iOS simulator.
+    *   **Expo Go (iOS/Android Device):**
+        *   Install the Expo Go app on your device.
+        *   Scan the QR code displayed in the terminal.
+        *   **Important:** If using Expo Go, you *must* configure the `EXPO_PUBLIC_API_URL` environment variable in the `.env` file. See the next section for details.
 
+**Configuring `EXPO_PUBLIC_API_URL` for Expo Go**
 
-You will see a dialog prompting you to open in 
-ios simulator or android sim, etc
+If you are using the Expo Go app, you need to set the `EXPO_PUBLIC_API_URL` environment variable to point to your local machine's IP address and the server's port.
 
-Open the corresponding one you want to use. 
+1.  **Edit the `.env` file:** Open the `.env` file located in the `/Workflow` directory.
+2.  **Set `EXPO_PUBLIC_API_URL`:** Change the value of `EXPO_PUBLIC_API_URL` to your local IP address and port 8080. For example, if your local IP is `192.168.0.130`, the line should look like this:
 
-Or if you are using the Expo Go app scan the QR Code with that devices camera.
+    ```
+    EXPO_PUBLIC_API_URL=http://192.168.0.130:8080
+    ```
 
+**Part 2: Running the Server**
 
-## If you are using EXPO Go
+The server is written in Go. To run it, follow these steps:
 
-Set your local IP in the .env file 
-For example if your local ip is 192.168.0.130
-
-set the 
-
-
-
-
-
-
-
+1.  **Install Go:** Ensure Go is installed. If not, download it from [https://go.dev/doc/install](https://go.dev/doc/install).
+2.  **Install TensorFlow:** Make sure you have Python 3, then install TensorFlow using `pip install tensorflow`.
+3.  **Start the Server:** In your terminal, navigate to the project's root directory and run `go run cmd/main.go`. The server should start up.
