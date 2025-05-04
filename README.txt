@@ -85,6 +85,11 @@ Or if you are using the Expo Go app scan the QR Code with that devices camera.
 
 ## If you are using EXPO Go
 
+Set your local IP in the .env file 
+For example if your local ip is 192.168.0.130
+
+set the 
+
 
 
 

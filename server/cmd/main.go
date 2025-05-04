@@ -12,8 +12,7 @@ import (
 
 	"time"
 
-	"strconv"
-
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/lmittmann/tint"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/sqlite"
@@ -21,6 +20,7 @@ import (
 )
 
 var db *gorm.DB
+var jwtSecret = []byte("supersecretkey") // Use env var in production
 
 func initDatabase() {
 	var err error
@@ -93,16 +93,54 @@ func checkPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func getUserIDFromRequest(r *http.Request) (uint, error) {
-	cookie, err := r.Cookie("session_id")
+// --- JWT helpers ---
+
+func generateJWT(user server.User) (string, error) {
+	claims := jwt.MapClaims{
+		"user_id": user.ID,
+		"email":   user.Email,
+		"name":    user.Name,
+		"exp":     time.Now().Add(24 * time.Hour).Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(jwtSecret)
+}
+
+func parseJWTFromRequest(r *http.Request) (jwt.MapClaims, error) {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return nil, http.ErrNoCookie
+	}
+	var tokenString string
+	// Support "Bearer <token>"
+	if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+		tokenString = authHeader[7:]
+	} else {
+		tokenString = authHeader
+	}
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return jwtSecret, nil
+	})
+	if err != nil || !token.Valid {
+		return nil, err
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, http.ErrNoCookie
+	}
+	return claims, nil
+}
+
+func getUserIDFromJWT(r *http.Request) (uint, error) {
+	claims, err := parseJWTFromRequest(r)
 	if err != nil {
 		return 0, err
 	}
-	userID, err := strconv.ParseUint(cookie.Value, 10, 64)
-	if err != nil {
-		return 0, err
+	idFloat, ok := claims["user_id"].(float64)
+	if !ok {
+		return 0, http.ErrNoCookie
 	}
-	return uint(userID), nil
+	return uint(idFloat), nil
 }
 
 // --- Auth Handlers ---
@@ -132,8 +170,15 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "email already exists", http.StatusConflict)
 		return
 	}
+	token, err := generateJWT(req)
+	if err != nil {
+		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]interface{}{"id": req.ID, "email": req.Email, "name": req.Name})
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"id": req.ID, "email": req.Email, "name": req.Name, "token": token,
+	})
 	slog.Debug("User signed up", "userID", req.ID, "email", req.Email)
 }
 
@@ -159,16 +204,42 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 		return
 	}
-	// Set session cookie (just user ID for demo; use JWT or secure session in production)
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session_id",
-		Value:    strconv.FormatUint(uint64(user.ID), 10),
-		Path:     "/",
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
+	token, err := generateJWT(user)
+	if err != nil {
+		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"id": user.ID, "email": user.Email, "name": user.Name, "token": token,
 	})
-	json.NewEncoder(w).Encode(map[string]interface{}{"id": user.ID, "email": user.Email, "name": user.Name})
 	slog.Debug("User logged in", "userID", user.ID, "email", user.Email)
+}
+
+// --- Get User Handler ---
+
+func getUserHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	claims, err := parseJWTFromRequest(r)
+	if err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	userIDFloat, ok := claims["user_id"].(float64)
+	if !ok {
+		http.Error(w, "Invalid token", http.StatusUnauthorized)
+		return
+	}
+	var user server.User
+	if err := db.First(&user, uint(userIDFloat)).Error; err != nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"id": user.ID, "email": user.Email, "name": user.Name,
+	})
 }
 
 // --- Workout Handlers (with user scoping) ---
@@ -178,7 +249,7 @@ func storeWorkoutHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	userID, err := getUserIDFromRequest(r)
+	userID, err := getUserIDFromJWT(r)
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -205,7 +276,7 @@ func getAllWorkoutsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	userID, err := getUserIDFromRequest(r)
+	userID, err := getUserIDFromJWT(r)
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -301,6 +372,7 @@ func main() {
 	// Setup handlers
 	http.HandleFunc("/api/auth/signup", signupHandler)
 	http.HandleFunc("/api/auth/login", loginHandler)
+	http.HandleFunc("/api/auth/user", getUserHandler)
 	http.HandleFunc("/api/exercises/suggested", suggestExercisesHandler)
 	http.HandleFunc("/api/exercises", getAllExercises)
 	http.HandleFunc("/api/workouts", func(w http.ResponseWriter, r *http.Request) {

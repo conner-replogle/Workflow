@@ -36,5 +36,6 @@ type User = {
     height: number;
     weight: number;
     email: string;
+    token: string;
 
 }

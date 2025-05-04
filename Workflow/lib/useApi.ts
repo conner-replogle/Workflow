@@ -5,7 +5,6 @@ interface ApiState {
     workouts: Workout[];
     exercises: Exercise[];
     user: User | null;
-    authToken: string | null;
 
     login: (email: string, password: string) => Promise<void>;
     signUp: (email: string, password: string,name: string) => Promise<void>;
@@ -16,20 +15,24 @@ interface ApiState {
     getAllExercises: () => Promise<void>;
 
 }
-const API_URL = 'http://localhost:8080';
+
+
+function API_URL(){
+    return process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8080';
+}
 
 
 // Define the store
 export const useApiStore = create<ApiState>()(devtools(
     persist(
    (set, get) => ({
+    
     exercises: [],
     user: null,
-    authToken: null,
     workouts: [],
     getAllExercises: async () => {
         console.log('Fetching exercises...');
-        const response = await fetch(`${API_URL}/api/exercises`);
+        const response = await fetch(`${API_URL()}/api/exercises`);
         if (!response.ok) {
             console.error('Network response was not ok', response.statusText);
             throw new Error('Network response was not ok');
@@ -38,12 +41,16 @@ export const useApiStore = create<ApiState>()(devtools(
         set({ exercises: data });
     },
 
+
+
+
     getAllWorkouts: async () => {
+        set({ workouts: [] });
         console.log('Fetching workouts...');
-        const authToken = get().authToken;
-        const response = await fetch(`${API_URL}/api/workouts`, {
+        const user = get().user;
+        const response = await fetch(`${API_URL()}/api/workouts`, {
             headers: {
-                ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+                ...(user?.token ? { Authorization: `Bearer ${user.token}` } : {}),
             },
         });
         if (!response.ok) {
@@ -55,15 +62,15 @@ export const useApiStore = create<ApiState>()(devtools(
     },
     saveWorkout: async (workout: Workout) => { 
         console.log('Saving workout...');
-        const authToken = get().authToken;
+        const user = get().user;
         workout.exercises.forEach((a) =>{
             a.templateID = a.template.id
         })
-        const response = await fetch(`${API_URL}/api/workouts`, {
+        const response = await fetch(`${API_URL()}/api/workouts`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+                ...(user ? { Authorization: `Bearer ${user.token}` } : {}),
             },
             body: JSON.stringify(workout),
         });
@@ -80,10 +87,11 @@ export const useApiStore = create<ApiState>()(devtools(
 
     login: async (email: string, password: string) => {
         console.log('Logging in...');
-        const response = await fetch(`${API_URL}/api/auth/login`, {
+        const response = await fetch(`${API_URL()}/api/auth/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+
             },
             body: JSON.stringify({ email, password }),
         });
@@ -97,7 +105,7 @@ export const useApiStore = create<ApiState>()(devtools(
     },
     signUp: async (email: string, password: string,name: string) => {
         console.log('Signing up...');
-        const response = await fetch(`${API_URL}/api/auth/signup`, {
+        const response = await fetch(`${API_URL()}/api/auth/signup`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
